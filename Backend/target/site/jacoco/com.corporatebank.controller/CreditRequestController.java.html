@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CreditRequestController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Corporate Banking System</a> &gt; <a href="index.source.html" class="el_package">com.corporatebank.controller</a> &gt; <span class="el_source">CreditRequestController.java</span></div><h1>CreditRequestController.java</h1><pre class="source lang-java linenums">package com.corporatebank.controller;
+
+import com.corporatebank.dto.CreditRequestCreateDTO;
+import com.corporatebank.dto.CreditRequestUpdateDTO;
+import com.corporatebank.model.CreditRequest;
+import com.corporatebank.service.CreditRequestService;
+import jakarta.validation.Valid;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping(&quot;/api/credit-requests&quot;)
+public class CreditRequestController {
+
+    private final CreditRequestService service;
+
+<span class="nc" id="L19">    public CreditRequestController(CreditRequestService service) {</span>
+<span class="nc" id="L20">        this.service = service;</span>
+<span class="nc" id="L21">    }</span>
+
+    @PostMapping
+    public CreditRequest create(@Valid @RequestBody CreditRequestCreateDTO dto, Authentication auth) {
+<span class="nc" id="L25">        return service.create(dto, auth.getName());</span>
+    }
+
+    @GetMapping
+    public List&lt;CreditRequest&gt; get(Authentication auth) {
+        // 🔥 Updated to handle &quot;ROLE_&quot; prefix if your JWT uses it
+<span class="nc" id="L31">        boolean isAnalyst = auth.getAuthorities().stream()</span>
+<span class="nc bnc" id="L32" title="All 4 branches missed.">                .anyMatch(a -&gt; a.getAuthority().equals(&quot;ROLE_ANALYST&quot;) || a.getAuthority().equals(&quot;ANALYST&quot;));</span>
+
+<span class="nc bnc" id="L34" title="All 2 branches missed.">        return isAnalyst ? service.getAll() : service.getByRm(auth.getName());</span>
+    }
+
+    @PutMapping(&quot;/{id}&quot;)
+    public CreditRequest updateStatus(@PathVariable String id, @Valid @RequestBody CreditRequestUpdateDTO dto) {
+<span class="nc" id="L39">        return service.updateStatus(id, dto.getStatus(), dto.getRemarks());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

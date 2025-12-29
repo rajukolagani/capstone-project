@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CreditRequestService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Corporate Banking System</a> &gt; <a href="index.source.html" class="el_package">com.corporatebank.service</a> &gt; <span class="el_source">CreditRequestService.java</span></div><h1>CreditRequestService.java</h1><pre class="source lang-java linenums">package com.corporatebank.service;
+
+import com.corporatebank.dto.CreditRequestCreateDTO;
+import com.corporatebank.exception.ResourceNotFoundException;
+import com.corporatebank.model.CreditRequest;
+import com.corporatebank.repo.CreditRequestRepository;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Service
+public class CreditRequestService {
+
+    private final CreditRequestRepository repo;
+
+<span class="fc" id="L17">    public CreditRequestService(CreditRequestRepository repo) {</span>
+<span class="fc" id="L18">        this.repo = repo;</span>
+<span class="fc" id="L19">    }</span>
+
+    // =========================
+    // RM → Create Credit Request
+    // =========================
+    public CreditRequest create(CreditRequestCreateDTO dto, String rmUsername) {
+
+<span class="pc bpc" id="L26" title="2 of 4 branches missed.">        if (dto.getClientId() == null || dto.getClientId().isBlank()) {</span>
+<span class="fc" id="L27">            throw new IllegalArgumentException(&quot;Client ID is required&quot;);</span>
+        }
+
+<span class="nc" id="L30">        CreditRequest req = new CreditRequest();</span>
+<span class="nc" id="L31">        req.setClientId(dto.getClientId());</span>
+<span class="nc" id="L32">        req.setRequestAmount(dto.getRequestAmount());</span>
+<span class="nc" id="L33">        req.setTenureMonths(dto.getTenureMonths());</span>
+<span class="nc" id="L34">        req.setPurpose(dto.getPurpose());</span>
+
+<span class="nc" id="L36">        req.setSubmittedBy(rmUsername);</span>
+<span class="nc" id="L37">        req.setStatus(&quot;PENDING&quot;);</span>
+<span class="nc" id="L38">        req.setCreatedAt(LocalDateTime.now());</span>
+
+<span class="nc" id="L40">        return repo.save(req);</span>
+    }
+
+    // =========================
+    // RM → View Own Requests
+    // =========================
+    public List&lt;CreditRequest&gt; getByRm(String rmUsername) {
+<span class="nc" id="L47">        return repo.findBySubmittedBy(rmUsername);</span>
+    }
+
+    // =========================
+    // Analyst → View All Requests
+    // =========================
+    public List&lt;CreditRequest&gt; getAll() {
+<span class="fc" id="L54">        return repo.findAll();</span>
+    }
+
+    // =========================
+    // Analyst → Approve / Reject
+    // =========================
+    public CreditRequest updateStatus(String id, String status, String remarks) {
+
+<span class="nc" id="L62">        CreditRequest req = repo.findById(id)</span>
+<span class="nc" id="L63">                .orElseThrow(() -&gt;</span>
+<span class="nc" id="L64">                        new ResourceNotFoundException(&quot;Credit request not found with id: &quot; + id)</span>
+                );
+
+<span class="nc bnc" id="L67" title="All 2 branches missed.">        if (!status.equalsIgnoreCase(&quot;APPROVED&quot;)</span>
+<span class="nc bnc" id="L68" title="All 2 branches missed.">                &amp;&amp; !status.equalsIgnoreCase(&quot;REJECTED&quot;)) {</span>
+<span class="nc" id="L69">            throw new IllegalArgumentException(</span>
+                    &quot;Invalid status. Allowed values: APPROVED or REJECTED&quot;
+            );
+        }
+
+<span class="nc" id="L74">        req.setStatus(status.toUpperCase());</span>
+<span class="nc" id="L75">        req.setRemarks(remarks);</span>
+
+<span class="nc" id="L77">        return repo.save(req);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

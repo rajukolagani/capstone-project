@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuthService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Corporate Banking System</a> &gt; <a href="index.source.html" class="el_package">com.corporatebank.service</a> &gt; <span class="el_source">AuthService.java</span></div><h1>AuthService.java</h1><pre class="source lang-java linenums">package com.corporatebank.service;
+
+import com.corporatebank.dto.LoginRequest;
+import com.corporatebank.dto.RegisterRequest;
+import com.corporatebank.exception.BadRequestException;
+import com.corporatebank.exception.ResourceNotFoundException;
+import com.corporatebank.model.User;
+import com.corporatebank.repo.UserRepository;
+import com.corporatebank.security.JwtUtil;
+import org.springframework.security.authentication.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+@Service
+public class AuthService {
+
+    private final AuthenticationManager authManager;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
+
+    public AuthService(AuthenticationManager authManager,
+                       UserRepository userRepository,
+                       PasswordEncoder passwordEncoder,
+<span class="fc" id="L25">                       JwtUtil jwtUtil) {</span>
+<span class="fc" id="L26">        this.authManager = authManager;</span>
+<span class="fc" id="L27">        this.userRepository = userRepository;</span>
+<span class="fc" id="L28">        this.passwordEncoder = passwordEncoder;</span>
+<span class="fc" id="L29">        this.jwtUtil = jwtUtil;</span>
+<span class="fc" id="L30">    }</span>
+
+    public String login(LoginRequest request) {
+
+        try {
+<span class="fc" id="L35">            authManager.authenticate(</span>
+                    new UsernamePasswordAuthenticationToken(
+<span class="fc" id="L37">                            request.getUsername(),</span>
+<span class="fc" id="L38">                            request.getPassword()</span>
+                    )
+            );
+<span class="nc" id="L41">        } catch (BadCredentialsException e) {</span>
+<span class="nc" id="L42">            throw new BadRequestException(&quot;Invalid username or password&quot;);</span>
+<span class="nc" id="L43">        } catch (DisabledException e) {</span>
+<span class="nc" id="L44">            throw new BadRequestException(&quot;User account is disabled&quot;);</span>
+<span class="fc" id="L45">        }</span>
+
+<span class="fc" id="L47">        User user = userRepository.findByUsername(request.getUsername())</span>
+<span class="pc" id="L48">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;User not found&quot;));</span>
+
+<span class="pc bpc" id="L50" title="1 of 2 branches missed.">        if (!user.isActive()) {</span>
+<span class="fc" id="L51">            throw new BadRequestException(&quot;User account is inactive&quot;);</span>
+        }
+
+<span class="nc" id="L54">        return jwtUtil.generateToken(user.getUsername(), user.getRole().name());</span>
+    }
+
+    public User register(RegisterRequest request) {
+
+<span class="pc bpc" id="L59" title="1 of 2 branches missed.">        if (userRepository.findByUsername(request.getUsername()).isPresent()) {</span>
+<span class="nc" id="L60">            throw new BadRequestException(&quot;Username already exists&quot;);</span>
+        }
+
+<span class="fc" id="L63">        User user = new User();</span>
+<span class="fc" id="L64">        user.setUsername(request.getUsername());</span>
+<span class="fc" id="L65">        user.setEmail(request.getEmail());</span>
+<span class="fc" id="L66">        user.setPassword(passwordEncoder.encode(request.getPassword()));</span>
+<span class="fc" id="L67">        user.setRole(request.getRole());</span>
+<span class="fc" id="L68">        user.setActive(true);</span>
+
+<span class="fc" id="L70">        return userRepository.save(user);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
